@@ -13,6 +13,6 @@ I am not a CPA, accountant, or financial advisor. I take no responsibility for u
 # Donations
 BTC: 16HuArdg9DzXFyBopvkkBYfsSRtcodeq7v
 
-ETH/ERC-20 Tokens: 0x6F8E48f2B6d1Dd77C03f4207D8Fd6483b3aE043b
+ETH/ERC-20 Tokens: 0xb70A779095F455419d9B6120288eb8C2963d1708
 
 LTC: LbLYzZLJCW4jA8xR5SSW8BLTK8hR8PpGnU
