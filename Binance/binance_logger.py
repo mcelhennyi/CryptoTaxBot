@@ -1,11 +1,13 @@
 from binance.client import Client
+from FairMarketValue import FairMarketValue
+from FairMarketValue.bitcoin_average import BitcoinAverage
 import time
 import datetime
 import os, sys
 
 
-KEY_FILE = "../../.keys"
-CSV_BASE_LOCATION = "../../logs"
+KEY_FILE = "../.keys"
+CSV_BASE_LOCATION = "../logs"
 CSV_HEADERS = ['Epoch Time', 'Date/Time', 'Id', 'OrderId', 'Trading Pair', 'Quantity', 'Price in base currency',
                'Commission paid to exchange', 'Commision coin type', 'Profit/Loss (+/-)', 'Fair Market Value',
                'Buy/Sell', 'isMaker', 'isBestMatch']
@@ -14,24 +16,27 @@ if not os.path.isdir(CSV_BASE_LOCATION):
     os.mkdir(CSV_BASE_LOCATION)
 
 # ASSUMES BASE CURRENCY TICKER IS ONLY 3 CHARS LONG!!!!
+# Due to Binance's api limits of 120 requests per-minute, this will only send one call per second.
+#  Therefore, pulling records for every coin can take about 2 minutes (as of Jan 2018)
 
 
 class BinanceLogger:
     def __init__(self):
-        api_key, api_secret = self.load_api()
+        api_key, api_secret, fmv_api_name, fmv_key, fmv_secret = self.load_keys()
         print("Connecting to binance...")
         self.client = Client(api_key, api_secret)
         print("Connected!")
 
-        # Temps
-        self.temp_time = 0
-        self.temp_id = 0
+        self._fmv = None
+        if fmv_api_name == "btcavg":
+            self._fmv = BitcoinAverage(key=fmv_key, secret=fmv_secret)
+        else:
+            print("Please check name of key for your FMV api, if it is not supported this program will not work.")
+            exit(-1)
 
-
-    def load_api(self):
-        api_key = ""
-        api_secret = ""
-
+    @staticmethod
+    def load_keys():
+        # Load key file to memory
         with open(KEY_FILE, mode='r') as f:
             lines = ""
             for line in f:
@@ -40,11 +45,22 @@ class BinanceLogger:
         # format:
         # key = <key>
         # secret = <secret>
+        # fmv-key = <key>
+        # fmv-secret = <secret>
         lines_split = lines.split('\n')
         key = lines_split[0].split('=')[1].strip(' ')
         secret = lines_split[1].split('=')[1].strip(' ')
+        fmv_api_name_key = lines_split[2].split('=')[0].split('-')[0].strip(' ')
+        fmv_key = lines_split[2].split('=')[1].strip(' ')
+        fmv_api_name_secret = lines_split[2].split('=')[0].split('-')[0].strip(' ')
+        fmv_secret = lines_split[3].split('=')[1].strip(' ')
 
-        return key, secret
+        # Make sure the fmv client name is the same
+        if fmv_api_name_key != fmv_api_name_secret:
+            print("Error: FMV client is not the same name for both keys in .keys file.")
+            exit()
+
+        return key, secret, fmv_api_name_key, fmv_key, fmv_secret
 
     def main(self):
         # Get date for file titles
@@ -164,7 +180,7 @@ class BinanceLogger:
         csv_text = ""
         for trade in trades:
             is_buy = trade['isBuyer']
-            fair_market_value = self._get_fair_market_value(trade['time'], trade['price'], base_currency)
+            fair_market_value = self._fmv.get_fmv_on_date(epoch_millis=trade['time'], base_currency=base_currency)
             profit_loss = self._get_profit_loss(trade['price'], trade['qty'], fair_market_value)
 
             # Time
@@ -190,9 +206,6 @@ class BinanceLogger:
             csv_text += self._add_field(trade['isBestMatch'], endl='\r')    # isBestMatch ***last entry gets endl***
 
         return csv_text
-
-    def _get_fair_market_value(self, time, price_in_base, base_currency):
-        return 0  # TODO high priority, find an api to get this value
 
     # TODO find profit/loss, this could be a little difficult unless "loss" is when i buy, and "profit" is when I sell?
     def _get_profit_loss(self, price, qty, fair_market_value):
