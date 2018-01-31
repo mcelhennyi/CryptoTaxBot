@@ -1,6 +1,6 @@
 from binance.client import Client
 from FairMarketValue import FairMarketValue
-from FairMarketValue.bitcoin_average import BitcoinAverage
+from FairMarketValue.coindesk_interface import CoindeskInterface
 import time
 import datetime
 import os, sys
@@ -22,17 +22,12 @@ if not os.path.isdir(CSV_BASE_LOCATION):
 
 class BinanceLogger:
     def __init__(self):
-        api_key, api_secret, fmv_api_name, fmv_key, fmv_secret = self.load_keys()
+        api_key, api_secret, _, _, _ = self.load_keys()
         print("Connecting to binance...")
         self.client = Client(api_key, api_secret)
         print("Connected!")
 
-        self._fmv = None
-        if fmv_api_name == "btcavg":
-            self._fmv = BitcoinAverage(key=fmv_key, secret=fmv_secret)
-        else:
-            print("Please check name of key for your FMV api, if it is not supported this program will not work.")
-            exit(-1)
+        self._fmv = CoindeskInterface()
 
     @staticmethod
     def load_keys():
@@ -180,7 +175,7 @@ class BinanceLogger:
         csv_text = ""
         for trade in trades:
             is_buy = trade['isBuyer']
-            fair_market_value = self._fmv.get_fmv_on_date(epoch_millis=trade['time'], base_currency=base_currency)
+            fair_market_value = self._fmv.get_closing_price_bitcoin(epoch_millis=trade['time'])
             profit_loss = self._get_profit_loss(trade['price'], trade['qty'], fair_market_value)
 
             # Time
