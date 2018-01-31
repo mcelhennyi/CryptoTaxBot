@@ -9,8 +9,8 @@ import os, sys
 KEY_FILE = "../.keys"
 CSV_BASE_LOCATION = "../logs"
 CSV_HEADERS = ['Epoch Time', 'Date/Time', 'Id', 'OrderId', 'Trading Pair', 'Quantity', 'Price in base currency',
-               'Commission paid to exchange', 'Commision coin type', 'Profit/Loss (+/-)', 'Fair Market Value',
-               'Buy/Sell', 'isMaker', 'isBestMatch']
+               'Commission paid to exchange', 'Commision coin type', 'Profit/Loss (+/-) (BTC)',
+               'Fair Market Value (BTC)', 'Buy/Sell', 'isMaker', 'isBestMatch']
 
 if not os.path.isdir(CSV_BASE_LOCATION):
     os.mkdir(CSV_BASE_LOCATION)

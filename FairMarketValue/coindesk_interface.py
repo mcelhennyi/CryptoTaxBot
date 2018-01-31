@@ -3,6 +3,12 @@ import http.client
 import time
 import json
 
+"""
+Powered by https://www.coindesk.com/price/
+
+This only works for BTCUSD pair. So each trade will need to be converted to BTC, meaning <coin>ETH wont work.
+"""
+
 
 class CoindeskInterface(FairMarketValue):
     def __init__(self):
@@ -59,3 +65,7 @@ if __name__ == "__main__":
     date_string = "2017-09-01"
     print("...via date YYY-MM-DD: ")
     cd.get_closing_price_bitcoin(date=date_string, debug=True)
+
+    epoch = 1452680400
+    print("Another epoch: ")
+    cd.get_closing_price_bitcoin(epoch_millis=epoch, debug=True)
