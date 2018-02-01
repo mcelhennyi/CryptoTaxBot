@@ -9,8 +9,8 @@ import os, sys
 KEY_FILE = "../.keys"
 CSV_BASE_LOCATION = "../logs"
 CSV_HEADERS = ['Epoch Time', 'Date/Time', 'Id', 'OrderId', 'Trading Pair', 'Quantity', 'Price in base currency',
-               'Commission paid to exchange', 'Commision coin type', 'Profit/Loss (+/-) (BTC)',
-               'Fair Market Value (BTC)', 'Buy/Sell', 'isMaker', 'isBestMatch']
+               'Commission paid to exchange', 'Commision coin type', 'Profit/Loss (+/-) (BTC)', 'Money Flows',
+               'Fair Market Value (1-BTC)', 'Fair Market Value (1-BNB)', 'Buy/Sell', 'isMaker', 'isBestMatch']
 
 if not os.path.isdir(CSV_BASE_LOCATION):
     os.mkdir(CSV_BASE_LOCATION)
@@ -175,8 +175,11 @@ class BinanceLogger:
         csv_text = ""
         for trade in trades:
             is_buy = trade['isBuyer']
-            fair_market_value = self._fmv.get_closing_price_bitcoin(epoch_millis=trade['time'])
-            profit_loss = self._get_profit_loss(trade['price'], trade['qty'], fair_market_value)
+            fair_market_value_btc = self._fmv.get_average_usd_price_of_btc(epoch_millis=trade['time'])
+            fair_market_value_bnb = self._fmv.get_average_usd_price_of_bnb(epoch_millis=trade['time'])
+            profit_loss = self._get_profit_loss(trade['price'], trade['qty'], fair_market_value_btc)
+            fee = 0
+            money_flow = self._get_money_flow(quantity=0, btc_price=0, fee=0, is_buy=is_buy)
 
             # Time
             csv_text += self._add_field(trade['time'])                              # Epoch type time
@@ -193,7 +196,9 @@ class BinanceLogger:
             csv_text += self._add_field(trade['commission'])                # Commission paid to binance
             csv_text += self._add_field(trade['commissionAsset'])           # Type of coin used to pay binance
             csv_text += self._add_field(profit_loss)                        # Profit/Loss (+/-)
-            csv_text += self._add_field(fair_market_value)                  # Fair Market value of BTC at time of trade
+            csv_text += self._add_field(money_flow)                         # Money Flow
+            csv_text += self._add_field(fair_market_value_btc)              # Fair Market value of BTC at time of trade
+            csv_text += self._add_field(fair_market_value_bnb)              # Fair Market value of BNB at time of trade
 
             # Trade Transaction details
             csv_text += self._add_field('Buy' if is_buy else 'Sell')        # Buy/sell
@@ -201,6 +206,28 @@ class BinanceLogger:
             csv_text += self._add_field(trade['isBestMatch'], endl='\r')    # isBestMatch ***last entry gets endl***
 
         return csv_text
+
+    def _get_fee(self, commission_paid, commision_currency):
+
+
+    def _get_money_flow(self, quantity, btc_price, fee, is_buy):
+        """
+        These values are all USD.
+        :param quantity:
+        :param btc_price:
+        :param fee:
+        :param is_buy:
+        :return:
+        """
+        if is_buy:
+            # If we are buying this we count it as a negative flow.
+            # However if we are buying we want the fee to look like an outflow, so we add it
+            flow = -(quantity * btc_price + fee)
+        else:
+            # We sold, so we need to show our profit as a positive flow, but the fee is still a negative flow
+            flow = quantity * btc_price - fee
+
+        return flow
 
     # TODO find profit/loss, this could be a little difficult unless "loss" is when i buy, and "profit" is when I sell?
     def _get_profit_loss(self, price, qty, fair_market_value):

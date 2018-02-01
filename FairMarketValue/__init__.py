@@ -6,5 +6,14 @@ class FairMarketValue:
         self._key = key
         self._secret = secret
 
-    def get_fmv_on_date(self, epoch_millis=None, date=None):
+    def get_average_usd_price_of_btc(self, epoch_millis):
+        pass
+
+    def get_average_usd_price_of_bnb(self, epoch_millis):
+        pass
+
+    def get_average_usd_price_of_(self, symbol, epoch_millis):
+        pass
+
+    def get_average_btc_price_of_(self, symbol, epoch_millis):
         pass
