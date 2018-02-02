@@ -8,6 +8,7 @@ class CryptoCompareInterface(FairMarketValue):
     def __init__(self):
         FairMarketValue.__init__(self, None, None)
 
+    # TODO: MAke a running cache of the average value for a given day...to speed this part up
     def get_average_usd_price_of_btc(self, epoch_millis):
         return float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym="btc", to_sym='usd')['USD'])
 

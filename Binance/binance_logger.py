@@ -93,8 +93,8 @@ class BinanceLogger:
                     # Add the Header
                     self._write_header(f)
                     f.write(trades_csv)
-
-            time.sleep(1)
+            # TODO: average requests take so long, this isnt needed
+            # time.sleep(1)
         # Now log all to one file
         with open(os.path.join(CSV_BASE_LOCATION, date + "_all_pairs" + ".csv"), mode='w') as f:
             print("Logging all pairs to one file")
@@ -152,7 +152,7 @@ class BinanceLogger:
 
         trades_obj = self.client.get_my_trades(symbol=symbol+base) #, fromId=0)  # todo: fromId can be used to reduce response
 
-        print(trades_obj)
+        # print(trades_obj)
 
         trades_csv = self._get_csv_from_trades(trades_obj, base_currency=base, symbol=symbol)
         # -- Stupid debug code to test what the ids are for --
@@ -178,8 +178,10 @@ class BinanceLogger:
 
     def _get_csv_from_trades(self, trades, base_currency='BTC', symbol=''):
         csv_text = ""
-        for trade in trades:
+        num_trades = len(trades)
+        for i, trade in enumerate(trades):
             # trade['time'] IS in milliseconds
+            print("Processing " + symbol+base_currency + " trades " + str(i+1) + "/" + str(num_trades) + "...")
             is_buy = trade['isBuyer']
             fair_market_value_btc_usd = self._fmv.get_average_usd_price_of_btc(epoch_millis=trade['time'])
             fair_market_value_bnb_usd = self._fmv.get_average_usd_price_of_bnb(epoch_millis=trade['time'])

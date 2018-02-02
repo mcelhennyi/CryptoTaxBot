@@ -6,6 +6,8 @@ class FairMarketValue:
         self._key = key
         self._secret = secret
 
+        self._average_list = [{}]
+
     def get_average_usd_price_of_btc(self, epoch_millis):
         pass
 
