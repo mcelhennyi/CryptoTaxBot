@@ -1,6 +1,7 @@
 from binance.client import Client
 from FairMarketValue import FairMarketValue
-from FairMarketValue.coindesk_interface import CoindeskInterface
+# from FairMarketValue.coindesk_interface import CoindeskInterface
+from FairMarketValue.cryptocompare_interface import CryptoCompareInterface
 import time
 import datetime
 import os, sys
@@ -9,8 +10,9 @@ import os, sys
 KEY_FILE = "../.keys"
 CSV_BASE_LOCATION = "../logs"
 CSV_HEADERS = ['Epoch Time', 'Date/Time', 'Id', 'OrderId', 'Trading Pair', 'Quantity', 'Price in base currency',
-               'Commission paid to exchange', 'Commision coin type', 'Profit/Loss (+/-) (BTC)', 'Money Flows',
-               'Fair Market Value (1-BTC)', 'Fair Market Value (1-BNB)', 'Buy/Sell', 'isMaker', 'isBestMatch']
+               'Commission paid to exchange', 'Commision coin type (CCT)', 'Profit/Loss (+/-) (BTC)', 'Money Flows USD',
+               'Fair Market Value USD (1-BTC)', 'Fair Market Value USD (1-BNB)', 'Fair Market Value USD (1-CCT)',
+               'Buy/Sell', 'isMaker', 'isBestMatch']
 
 if not os.path.isdir(CSV_BASE_LOCATION):
     os.mkdir(CSV_BASE_LOCATION)
@@ -27,7 +29,7 @@ class BinanceLogger:
         self.client = Client(api_key, api_secret)
         print("Connected!")
 
-        self._fmv = CoindeskInterface()
+        self._fmv = CryptoCompareInterface()
 
     @staticmethod
     def load_keys():
@@ -136,11 +138,11 @@ class BinanceLogger:
             isBuyer: True if this was a buy, false if it was a sell
             time: time since epoch, use _get_my_time_string(time_millis) to get string time
             qty: The amount of coin filled
-            id: ? (A unique id, seems like this value is the ID for this symbol) This is the same ID that is used to
+            id: This is a child of order ID and is representative of parts of an order. This is the same ID that is used to
                 modify the return in the 'fromId' field for the client.get_my_trades() call. If the ID sent
                 is less than or equal to other Ids, those trades are returned.
             isBestMatch: ?
-            orderId: ? (A unique id, seems like this value is a global trade ID)
+            orderId: This is the ID of the order.
             price: price of the coin, in base currency.
             commissionAsset: The currency used to pay the commission to binance.
 
@@ -149,6 +151,9 @@ class BinanceLogger:
         """
 
         trades_obj = self.client.get_my_trades(symbol=symbol+base) #, fromId=0)  # todo: fromId can be used to reduce response
+
+        print(trades_obj)
+
         trades_csv = self._get_csv_from_trades(trades_obj, base_currency=base, symbol=symbol)
         # -- Stupid debug code to test what the ids are for --
         # if len(trades) > 0:
@@ -174,12 +179,28 @@ class BinanceLogger:
     def _get_csv_from_trades(self, trades, base_currency='BTC', symbol=''):
         csv_text = ""
         for trade in trades:
+            # trade['time'] IS in milliseconds
             is_buy = trade['isBuyer']
-            fair_market_value_btc = self._fmv.get_average_usd_price_of_btc(epoch_millis=trade['time'])
-            fair_market_value_bnb = self._fmv.get_average_usd_price_of_bnb(epoch_millis=trade['time'])
-            profit_loss = self._get_profit_loss(trade['price'], trade['qty'], fair_market_value_btc)
-            fee = 0
-            money_flow = self._get_money_flow(quantity=0, btc_price=0, fee=0, is_buy=is_buy)
+            fair_market_value_btc_usd = self._fmv.get_average_usd_price_of_btc(epoch_millis=trade['time'])
+            fair_market_value_bnb_usd = self._fmv.get_average_usd_price_of_bnb(epoch_millis=trade['time'])
+            fair_market_value_base_usd = self._fmv.get_average_usd_price_of_(symbol=base_currency,
+                                                                             epoch_millis=trade['time'])
+            fair_market_value_com_usd = self._fmv.get_average_usd_price_of_(symbol=trade['commissionAsset'],
+                                                                            epoch_millis=trade['time'])
+            # TODO: Probably should do in a post process step
+            # profit_loss = self._get_profit_loss(price=trade['price'],
+            #                                     qty=trade['qty'],
+            #                                     fair_market_value=fair_market_value_btc_usd)
+            profit_loss = 0  # TODO: temp
+            fee = self._get_fee(commission_paid=float(trade['commission']),
+                                commission_symbol=trade['commissionAsset'],
+                                epoch_millis=trade['time'])
+
+            money_flow = self._get_money_flow(quantity=float(trade['qty']),
+                                              value_of_sym_in_base_currency=float(trade['price']),
+                                              base_fmv=fair_market_value_base_usd,
+                                              fee_usd=fee,
+                                              is_buy=is_buy)
 
             # Time
             csv_text += self._add_field(trade['time'])                              # Epoch type time
@@ -197,8 +218,9 @@ class BinanceLogger:
             csv_text += self._add_field(trade['commissionAsset'])           # Type of coin used to pay binance
             csv_text += self._add_field(profit_loss)                        # Profit/Loss (+/-)
             csv_text += self._add_field(money_flow)                         # Money Flow
-            csv_text += self._add_field(fair_market_value_btc)              # Fair Market value of BTC at time of trade
-            csv_text += self._add_field(fair_market_value_bnb)              # Fair Market value of BNB at time of trade
+            csv_text += self._add_field(fair_market_value_btc_usd)          # Fair Market value of BTC at time of trade
+            csv_text += self._add_field(fair_market_value_bnb_usd)          # Fair Market value of BNB at time of trade
+            csv_text += self._add_field(fair_market_value_com_usd)          # Fair Market value of Commission asset, TOT
 
             # Trade Transaction details
             csv_text += self._add_field('Buy' if is_buy else 'Sell')        # Buy/sell
@@ -207,25 +229,36 @@ class BinanceLogger:
 
         return csv_text
 
-    def _get_fee(self, commission_paid, commision_currency):
+    def _get_fee(self, commission_paid, commission_symbol, epoch_millis):
+        """
+        This takes the commission asset, get its value in USD then multiplies the commission paid times its value in
+          USD to get the commission/fee pain in USD
+        :param commission_paid:
+        :param commission_symbol:
+        :param epoch_millis:
+        :return:
+        """
+        currency_in_usd = self._fmv.get_average_usd_price_of_(symbol=commission_symbol, epoch_millis=epoch_millis)
+        return commission_paid * currency_in_usd
 
-
-    def _get_money_flow(self, quantity, btc_price, fee, is_buy):
+    def _get_money_flow(self, quantity, value_of_sym_in_base_currency, base_fmv, fee_usd, is_buy):
         """
         These values are all USD.
         :param quantity:
-        :param btc_price:
-        :param fee:
+        :param value_of_sym_in_base_currency:
+        :param base_fmv:
+        :param fee_usd:
         :param is_buy:
         :return:
         """
         if is_buy:
             # If we are buying this we count it as a negative flow.
             # However if we are buying we want the fee to look like an outflow, so we add it
-            flow = -(quantity * btc_price + fee)
+            #             n1  *          amt of <sym>          * USD / <sym>  + $USD
+            flow = -((quantity * value_of_sym_in_base_currency * base_fmv) + fee_usd)
         else:
             # We sold, so we need to show our profit as a positive flow, but the fee is still a negative flow
-            flow = quantity * btc_price - fee
+            flow = quantity * value_of_sym_in_base_currency * base_fmv - fee_usd
 
         return flow
 

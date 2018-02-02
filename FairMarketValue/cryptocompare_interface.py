@@ -9,16 +9,16 @@ class CryptoCompareInterface(FairMarketValue):
         FairMarketValue.__init__(self, None, None)
 
     def get_average_usd_price_of_btc(self, epoch_millis):
-        return self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym="btc", to_sym='usd')
+        return float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym="btc", to_sym='usd')['USD'])
 
     def get_average_usd_price_of_bnb(self, epoch_millis):
-        return self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym="bnb", to_sym='usd')
+        return float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym="bnb", to_sym='usd')['USD'])
 
     def get_average_usd_price_of_(self, symbol, epoch_millis):
-        return self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym=symbol, to_sym='usd')
+        return float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym=symbol, to_sym='usd')['USD'])
 
     def get_average_btc_price_of_(self, symbol, epoch_millis):
-        return self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym=symbol, to_sym='btc')
+        return float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym=symbol, to_sym='btc')['BTC'])
 
     def _request_day_average(self, epoch_seconds, from_sym, to_sym='BTC'):
         # https://min-api.cryptocompare.com/data/dayAvg?fsym=BTC&tsym=USD&toTs=1517460356&extraParams=your_app_name
