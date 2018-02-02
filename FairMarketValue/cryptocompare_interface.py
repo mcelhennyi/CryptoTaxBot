@@ -1,24 +1,59 @@
 from FairMarketValue import FairMarketValue
+from FairMarketValue.fmv_buffer import FmvBuffer
 import http.client
 import json
 import time
+import datetime
 
 
 class CryptoCompareInterface(FairMarketValue):
     def __init__(self):
         FairMarketValue.__init__(self, None, None)
 
-    # TODO: MAke a running cache of the average value for a given day...to speed this part up
+        # Buffer to speed up average querying
+        self._buf = FmvBuffer()
+
     def get_average_usd_price_of_btc(self, epoch_millis):
-        return float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym="btc", to_sym='usd')['USD'])
+        symbol = 'btc'
+        date_string = self._get_date_string(epoch_millis)
+        ret_avg = self._buf.get_average(symbol, date_string)
+        if ret_avg is not None:
+            # print("Average found in buffer")
+            return ret_avg
+        else:
+            # print("Requesting average")
+            avg = float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym=symbol, to_sym='usd')['USD'])
+            assert self._buf.buffer_average(symbol, date_string, avg)
+            return avg
 
     def get_average_usd_price_of_bnb(self, epoch_millis):
-        return float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym="bnb", to_sym='usd')['USD'])
+        symbol = 'bnb'
+        date_string = self._get_date_string(epoch_millis)
+        ret_avg = self._buf.get_average(symbol, date_string)
+        if ret_avg is not None:
+            # print("Average found in buffer")
+            return ret_avg
+        else:
+            # print("Requesting average")
+            avg = float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym=symbol, to_sym='usd')['USD'])
+            assert self._buf.buffer_average(symbol, date_string, avg)
+            return avg
 
     def get_average_usd_price_of_(self, symbol, epoch_millis):
-        return float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym=symbol, to_sym='usd')['USD'])
+        date_string = self._get_date_string(epoch_millis)
+        ret_avg = self._buf.get_average(symbol, date_string)
+        if ret_avg is not None:
+            # print("Average found in buffer")
+            return ret_avg
+        else:
+            # print("Requesting average")
+            avg = float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym=symbol, to_sym='usd')['USD'])
+            assert self._buf.buffer_average(symbol, date_string, avg)
+            return avg
 
     def get_average_btc_price_of_(self, symbol, epoch_millis):
+        # WARNING Don't buffer, because buffer assumes USD
+        # print("Requesting average")
         return float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym=symbol, to_sym='btc')['BTC'])
 
     def _request_day_average(self, epoch_seconds, from_sym, to_sym='BTC'):
@@ -31,6 +66,10 @@ class CryptoCompareInterface(FairMarketValue):
             raise Exception("Request not good: " + str(response.status))
 
         return json.loads(response.read().decode('utf-8'))
+
+    def _get_date_string(self, epoch_millis):
+        st = datetime.datetime.fromtimestamp(epoch_millis/1000).strftime('%Y-%m-%d')
+        return st
 
 
 if __name__ == "__main__":
