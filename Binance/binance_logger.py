@@ -23,13 +23,16 @@ if not os.path.isdir(CSV_BASE_LOCATION):
 
 
 class BinanceLogger:
-    def __init__(self):
+    def __init__(self, fmv=None):
         api_key, api_secret, _, _, _ = self.load_keys()
         print("Connecting to binance...")
         self.client = Client(api_key, api_secret)
         print("Connected!")
 
-        self._fmv = CryptoCompareInterface()
+        if fmv is None:
+            self._fmv = CryptoCompareInterface()
+        else:
+            self._fmv = fmv
 
     @staticmethod
     def load_keys():
@@ -147,29 +150,11 @@ class BinanceLogger:
             commissionAsset: The currency used to pay the commission to binance.
 
         :param symbol:
-        :return: trades array
+        :return: processed trades csv, trades json obj
         """
 
         trades_obj = self.client.get_my_trades(symbol=symbol+base) #, fromId=0)  # todo: fromId can be used to reduce response
-
-        # print(trades_obj)
-
         trades_csv = self._get_csv_from_trades(trades_obj, base_currency=base, symbol=symbol)
-        # -- Stupid debug code to test what the ids are for --
-        # if len(trades) > 0:
-        #     if self.temp_time <= trades[0]['time']:
-        #         if self.temp_id <= trades[0]['orderId']:
-        #             print("GOOD 1")
-        #         else:
-        #             print("BAD 1")
-        #     elif self.temp_time >= trades[0]['time']:
-        #         if self.temp_id >= trades[0]['orderId']:
-        #             print("GOOD 2")
-        #         else:
-        #             print("BAD 2")
-        #
-        #     self.temp_time = trades[0]['time']
-        #     self.temp_id = trades[0]['id']
 
         return trades_csv, trades_obj
 
