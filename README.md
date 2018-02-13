@@ -37,6 +37,13 @@ The `Fair market value` of each coin is retrieved from the [cryptocompare](https
 
 ### Money Flow Calculation
 Notice that if the trade was A `buy` the resulting `money flow` is negative and the fee is added to the transaction, showing that we spent/lost money. Conversely notice that if the trade is a `sell` then the resulting `money flow` is positive and the fee is subtracted as a loss.  
+Note: You may decide to check my work, I encourage it...however if you do you may see that the `money flow` seems to not make sense. You think to yourself "I know I sold this for a gain, but my money flow says its a loss".  
+There are two scenarios:  
+1) You sold on the same day, and maybe the quantities were different (you sold with some dust left over)  
+or  
+2) you sold on different days and the value of BTC averaged over the day doesnt reflect the actual value of the BTC at the time of sale (maybe you bought on a valley and sold at a peak on two different days, but the average was no where near the valley/peak). This is ok [says an article from investopedia](https://www.investopedia.com/university/definitive-bitcoin-tax-guide-dont-let-irs-snow-you/definitive-bitcoin-tax-guide-chapter-2-trading-gains-and-losses-fair-market-value.asp), since using the daily average for each day is a "reasonable manner which is consistently applied"(investopedia). 
+
+#### The Calculation
 ```
 if is_buy:
     # If we are buying this we count it as a negative flow.
