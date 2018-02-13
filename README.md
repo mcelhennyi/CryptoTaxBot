@@ -21,7 +21,7 @@ Update (2/12/18): The bot can pull down all past trades (up to 500 per coin) and
 ## TODO
 - create a way to only retrieve what has not been retrieved yet.
 - automate uploading results to google drive for garunteed backup
-- retrieve more that 500 per coin, if needed (imagine running this program once at the end of the year, instead of periodically throughout the year)
+- retrieve more than 500 per coin, if needed (imagine running this program once at the end of the year, instead of periodically throughout the year)
 
 # Calculated Values and Calculations
 ## Definitions
