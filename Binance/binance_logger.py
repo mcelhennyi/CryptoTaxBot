@@ -75,27 +75,27 @@ class BinanceLogger:
 
         # Iterate over each symbol, pull my trades, and log them with calculations included ...
         #   (profit/loss, fair market value, etc)
-        for sym in avail_symbols:
+        for both in avail_symbols:
             time_start = time.time()
+
             # Get sym and base
-            base = sym[-3:]
-            sym = str(sym).split(base)[0]
-
-            # if base == 'BTC' or base == 'ETH':
-            # print(sym+base)
-
-            # Open up a log for this coin only
-            print("\n***************************************\nProcessing " + str(sym) + " trades...")
+            sym, base = self._split_sym_base(both)
             if sym == "123":
                 continue  # Bug in Binance RestAPI causes a return of a "123" symbol, SKIP IT
+
+            # Process the coin pair
+            print("\n***************************************\nProcessing " + str(sym) + str(base) + " trades...")
             last_id = self._get_last_fetched_id_for_sym(sym)
             trades_csv, trades_obj = self._get_my_trades_for_symbol(symbol=sym, base=base, id_from=last_id)
             if len(trades_obj) > 0:
                 # Log this trade away
                 full_csv_txt += trades_csv
-                with open(os.path.join(CSV_BASE_LOCATION, date + "_" + sym + ".csv"), mode='w') as f:
+                trade_csv_filename = os.path.join(CSV_BASE_LOCATION, date + "_" + sym + ".csv")
+                new_file = not os.path.isfile(trade_csv_filename)
+                with open(trade_csv_filename, mode='a') as f:
                     # Add the Header
-                    self._write_header(f)
+                    if new_file:
+                        self._write_header(f)
                     f.write(trades_csv)
 
             # Constrain main loop to once per second
@@ -113,6 +113,24 @@ class BinanceLogger:
     @staticmethod
     def _get_my_time_string(time_millis):
         return datetime.datetime.fromtimestamp(time_millis/1000).strftime('%c')
+
+    def _split_sym_base(self, both):
+        """
+        Split both into a sym+base pair. Can handle <n number of letters><3 letters> and <n number of letters>USDT
+
+        :param both:
+        :return:
+        """
+        last_three = both[-3:]
+        sym = str(both).split(last_three)[0]
+        if last_three == "SDT":
+            base = both[-4:]
+            sym = str(both).split(base)[0]
+            return sym, base
+        else:
+            base = last_three
+
+        return sym, base
 
     def _print_withdraw_entry(self, withdraw):
         print("Address " + str(withdraw['address']))
