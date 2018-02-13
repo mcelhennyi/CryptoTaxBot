@@ -35,7 +35,7 @@ PC = Purchased coin, the coin that is being purchased with the `base currency`
 ### Fair Market Values
 The `Fair market value` of each coin is retrieved from the [cryptocompare](https://www.cryptocompare.com/) API as daily averages. Each time a new `fmv` is requested from the API it is buffered locally so that later `fmv` calls are greatly sped up.
 
-### Money Flow Calculation
+### Money Flow
 Notice that if the trade was A `buy` the resulting `money flow` is negative and the fee is added to the transaction, showing that we spent/lost money. Conversely notice that if the trade is a `sell` then the resulting `money flow` is positive and the fee is subtracted as a loss.  
 Note: You may decide to check my work, I encourage it...however if you do you may see that the `money flow` seems to not make sense. You think to yourself "I know I sold this for a gain, but my money flow says its a loss".  
 There are two scenarios:  
