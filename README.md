@@ -14,15 +14,43 @@ Since I am making this for myself, I am doing this open source and am not sellin
 5) Repeat each month (configurable)
 
 # Status
-This is currently a WIP but I hope to have this done sometime in the coming months (Feb/Mar 2018)
+January 2018: This is currently a WIP but I hope to have this done sometime in the coming months (Feb/Mar 2018)  
+Update (2/12/18): The bot can pull down all past trades (up to 500 per coin) and calculate the `Fair Market Value` of that trade on the day it was made. The `Fair Market Value` used in this program is the `average` cost of `BTC` on the `DAY` of the trade. It will save all the information from binance along with calculated `Fair market values`.  
+
+# Calculated Values and Calculations
+## Definitions
+FMV = Fair Market Value, here it is synonomous with the average cost in USD of the coin on the date of trade.  
+CCT = Commission coin type  
+Base currency = The currency used to buy the alt coin (BTC, ETH, BNB, USDT on Binance)  
+Money Flow = The value of the trade, positive for for Sells and Negative for Buys  
+PC = Purchased coin, the coin that is being purchased with the `base currency`
+
+## Calculations (Literal Copies of the code)
+### Money Flow Calculation
+```
+if is_buy:
+    # If we are buying this we count it as a negative flow.
+    # However if we are buying we want the fee to look like an outflow, so we add it
+    #             n1  *          amt of <sym>          * USD / <sym>  + $USD
+    flow = -((quantity * value_of_sym_in_base_currency * base_fmv) + fee_usd)
+else:
+    # We sold, so we need to show our profit as a positive flow, but the fee is still a negative flow
+    flow = quantity * value_of_sym_in_base_currency * base_fmv - fee_usd
+```
+`quantity` is straight out of the binance api response for this trade  
+`value_of_sym_in_base_currency` is the value of a single `PC` in `Base Currency`  
+`base_fmv` is the USD value of one `base currency` coin  
+`fee_usd` is the value of the fee binance collected in USD  
+
 
 # Installation
-(When finished I will have install instructions)
+[Visit here for installation instructions](https://github.com/mcelhennyi/CryptoTaxBot/blob/master/INSTALLATION.md)
 
 # Notice
 I am not a CPA, accountant, or financial advisor. I take no responsibility for use of this app. If you have questions feel free to email me. imcelhenny1@gmail.com
 
 # Donations
+If this tool made your life easier, make mine easier for making it!
 BTC: 16HuArdg9DzXFyBopvkkBYfsSRtcodeq7v
 
 ETH/ERC-20 Tokens: 0xb70A779095F455419d9B6120288eb8C2963d1708
