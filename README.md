@@ -14,8 +14,14 @@ Since I am making this for myself, I am doing this open source and am not sellin
 5) Repeat each month (configurable)
 
 # Status
+## Current
 January 2018: This is currently a WIP but I hope to have this done sometime in the coming months (Feb/Mar 2018)  
 Update (2/12/18): The bot can pull down all past trades (up to 500 per coin) and calculate the `Fair Market Value` of that trade on the day it was made. The `Fair Market Value` used in this program is the `average` cost of `BTC` on the `DAY` of the trade. It will save all the information from binance along with calculated `Fair market values` into a CSV for visualizing in MS Excel.  
+
+## TODO
+- create a way to only retrieve what has not been retrieved yet.
+- automate uploading results to google drive for garunteed backup
+- retrieve more that 500 per coin, if needed (imagine running this program once at the end of the year, instead of periodically throughout the year)
 
 # Calculated Values and Calculations
 ## Definitions
@@ -46,8 +52,17 @@ else:
 `base_fmv` is the USD value of one `base currency` coin  
 `fee_usd` is the value of the fee binance collected in USD  
 
-# Installation
+# Use
+## Installation
 [Visit here for installation instructions](https://github.com/mcelhennyi/CryptoTaxBot/blob/master/INSTALLATION.md)
+
+## Running the program
+The program can be launched in a terminal/command-prompt by running the following commad:
+```
+cd CryptoTaxBot/
+python main.py
+```
+Notice: This will only run the program once. I plan to create a script to add this program to a cron-job for linux, but have not gotten to that part yet. Feel free to try cron-jobs out for your self. 
 
 # Notice
 I am not a CPA, accountant, or financial advisor. I take no responsibility for use of this app. If you have questions feel free to email me. imcelhenny1@gmail.com
