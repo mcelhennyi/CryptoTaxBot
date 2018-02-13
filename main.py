@@ -9,22 +9,21 @@ LOGS_DIR = 'logs'
 class Main:
     def __init__(self):
         self.fmv = CryptoCompareInterface()
-        # self.binance = BinanceLogger(self.fmv)
+        self.binance = BinanceLogger(self.fmv)
 
     def run_state(self):
         # Cache old log files, get start IDS for this pull
         self._cache_old_logs()
 
         # Log the exchanges
-        # self._run_binance_logger()
+        self._run_binance_logger()
         # self._run_binance_logger()
 
         # Upload logs to google
-        self._upload_to_google()
+        # self._upload_to_google()
 
     def _run_binance_logger(self):
-        pass
-        # self.binance.main()
+        self.binance.main()
 
     def _run_kucoin_logger(self):
         pass

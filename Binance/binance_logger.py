@@ -1,13 +1,11 @@
 from binance.client import Client
-from FairMarketValue import FairMarketValue
-# from FairMarketValue.coindesk_interface import CoindeskInterface
 from FairMarketValue.cryptocompare_interface import CryptoCompareInterface
 import time
 import datetime
 import os, sys
 
 
-KEY_FILE = "../.keys"
+KEY_FILE = ".keys"
 CSV_BASE_LOCATION = "../logs"
 CSV_HEADERS = ['Epoch Time', 'Date/Time', 'Id', 'OrderId', 'Trading Pair', 'Quantity', 'Price in base currency',
                'Commission paid to exchange', 'Commision coin type (CCT)', 'Profit/Loss (+/-) (BTC)', 'Money Flows USD',
@@ -24,7 +22,7 @@ if not os.path.isdir(CSV_BASE_LOCATION):
 
 class BinanceLogger:
     def __init__(self, fmv=None):
-        api_key, api_secret, _, _, _ = self.load_keys()
+        api_key, api_secret = self.load_keys()
         print("Connecting to binance...")
         self.client = Client(api_key, api_secret)
         print("Connected!")
@@ -50,18 +48,8 @@ class BinanceLogger:
         lines_split = lines.split('\n')
         key = lines_split[0].split('=')[1].strip(' ')
         secret = lines_split[1].split('=')[1].strip(' ')
-        fmv_api_name_key = lines_split[2].split('=')[0].split('-')[0].strip(' ')
-        fmv_key = lines_split[2].split('=')[1].strip(' ')
-        fmv_api_name_secret = lines_split[2].split('=')[0].split('-')[0].strip(' ')
-        fmv_secret = lines_split[3].split('=')[1].strip(' ')
 
-        # Make sure the fmv client name is the same
-        if fmv_api_name_key != fmv_api_name_secret:
-            print("Error: FMV client is not the same name for both keys in .keys file.")
-            exit()
-
-        return key, secret, fmv_api_name_key, fmv_key, fmv_secret
-
+        return key, secret,
     def main(self):
         # Get date for file titles
         date = datetime.datetime.now().strftime("%Y_%m_%d")
@@ -87,10 +75,10 @@ class BinanceLogger:
             # print(sym+base)
 
             # Open up a log for this coin only
+            print("Logging for " + str(sym))
             trades_csv, trades_obj = self._get_my_trades_for_symbol(symbol=sym, base=base)
             if len(trades_obj) > 0:
                 # Log this trade away
-                print("Logging for " + str(sym))
                 full_csv_txt += trades_csv
                 with open(os.path.join(CSV_BASE_LOCATION, date + "_" + sym + ".csv"), mode='w') as f:
                     # Add the Header
