@@ -7,9 +7,10 @@ Create a logger that runs once a month (configurable) and pulls down all trades 
 Since I am making this for myself, I am doing this open source and am not selling it.
 
 # Proposed Life cycle
-1) Pull down all trades that are currently not logged for the year.
-2) Calculate the fair market value, as well as profit/loss for each trade.
-3) Save these values as well as the data from the exchange to a .csv (spreadsheet).
+Note: ``example`` means this part is complete  
+1) ``Pull down all trades`` that are currently not logged for the year.
+2) ``Calculate the fair market value``, as well as profit/loss ``for each trade``.
+3) ``Save these values as well as the data from the exchange to a .csv (spreadsheet).``
 4) Upload the spreadsheet to a google drive folder for safe backup. (Optional, recommended)
 5) Repeat each month (configurable)
 
