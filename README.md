@@ -73,7 +73,11 @@ python main.py
 Notice: This will only run the program once. I plan to create a script to add this program to a cron-job for linux, but have not gotten to that part yet. Feel free to try cron-jobs out for your self. 
 
 # Notice
-I am not a CPA, accountant, or financial advisor. I take no responsibility for use of this app. If you have questions feel free to email me, or open up an issue above. imcelhenny1@gmail.com
+I am not a CPA, accountant, or financial advisor. I take no responsibility for use of this app. If you have questions feel free to email me, or open up an issue above. 
+
+# Contact
+Email: imcelhenny1@gmail.com  
+Telegram: https://t.me/cryptotaxbot
 
 # Donations
 If this tool made your life easier then help make mine easier for making it!  
