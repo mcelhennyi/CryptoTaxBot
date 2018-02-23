@@ -275,30 +275,72 @@ class BinanceLogger:
                                               fee_usd=fee,
                                               is_buy=is_buy)
 
-            # Time
-            csv_text += self._add_field(trade['time'])                              # Epoch type time
-            csv_text += self._add_field(self._get_my_time_string(trade['time']))    # Human readable local time
+            csv_text += self._data_to_csv(time_millis=trade['time'],
+                                          trade_id=trade['id'],
+                                          order_id=trade['orderId'],
+                                          symbol=symbol,
+                                          base_symbol=base_currency,
+                                          quantity=trade['qty'],
+                                          price=trade['price'],
+                                          commission_fee=trade['commission'],
+                                          commission_symbol=trade['commissionAsset'],
+                                          profit_loss=profit_loss,
+                                          money_flow=money_flow,
+                                          fair_market_value_btc_usd=fair_market_value_btc_usd,
+                                          fair_market_value_bnb_usd=fair_market_value_bnb_usd,
+                                          fair_market_value_com_usd=fair_market_value_com_usd,
+                                          is_buy=is_buy,
+                                          is_maker=trade['isMaker'],
+                                          is_best_match=trade['isBestMatch'])
 
-            # Ids
-            csv_text += self._add_field(trade['id'])                                # Id
-            csv_text += self._add_field(trade['orderId'])                           # OrderId
-            csv_text += self._add_field(symbol+base_currency)                       # Trading Pair
+        return csv_text
 
-            # Trade value data aka $$$ MONEY
-            csv_text += self._add_field(trade['qty'])                       # Quantity purchased
-            csv_text += self._add_field(trade['price'])                     # Price in base currency per coin
-            csv_text += self._add_field(trade['commission'])                # Commission paid to binance
-            csv_text += self._add_field(trade['commissionAsset'])           # Type of coin used to pay binance
-            csv_text += self._add_field(profit_loss)                        # Profit/Loss (+/-)
-            csv_text += self._add_field(money_flow)                         # Money Flow
-            csv_text += self._add_field(fair_market_value_btc_usd)          # Fair Market value of BTC at time of trade
-            csv_text += self._add_field(fair_market_value_bnb_usd)          # Fair Market value of BNB at time of trade
-            csv_text += self._add_field(fair_market_value_com_usd)          # Fair Market value of Commission asset, TOT
+    def _data_to_csv(self,
+                     time_millis,
+                     trade_id,
+                     order_id,
+                     symbol,
+                     base_symbol,
+                     quantity,
+                     price,
+                     commission_fee,
+                     commission_symbol,
+                     profit_loss,
+                     money_flow,
+                     fair_market_value_btc_usd,
+                     fair_market_value_bnb_usd,
+                     fair_market_value_com_usd,
+                     is_buy,
+                     is_maker,
+                     is_best_match
+                     ):
 
-            # Trade Transaction details
-            csv_text += self._add_field('Buy' if is_buy else 'Sell')        # Buy/sell
-            csv_text += self._add_field(trade['isMaker'])                   # isMaker
-            csv_text += self._add_field(trade['isBestMatch'], endl='\r')    # isBestMatch ***last entry gets endl***
+        csv_text = ""
+
+        # Time
+        csv_text += self._add_field(time_millis)                            # Epoch type time
+        csv_text += self._add_field(self._get_my_time_string(time_millis))  # Human readable local time
+
+        # Ids
+        csv_text += self._add_field(trade_id)                      # Id
+        csv_text += self._add_field(order_id)                      # OrderId
+        csv_text += self._add_field(symbol + base_symbol)          # Trading Pair
+
+        # Trade value data aka $$$ MONEY
+        csv_text += self._add_field(quantity)                      # Quantity purchased
+        csv_text += self._add_field(price)                         # Price in base currency per coin
+        csv_text += self._add_field(commission_fee)                # Commission paid to binance
+        csv_text += self._add_field(commission_symbol)             # Type of coin used to pay binance
+        csv_text += self._add_field(profit_loss)                   # Profit/Loss (+/-)
+        csv_text += self._add_field(money_flow)                    # Money Flow
+        csv_text += self._add_field(fair_market_value_btc_usd)     # Fair Market value of BTC at time of trade
+        csv_text += self._add_field(fair_market_value_bnb_usd)     # Fair Market value of BNB at time of trade
+        csv_text += self._add_field(fair_market_value_com_usd)     # Fair Market value of Commission asset, TOT
+
+        # Trade Transaction details
+        csv_text += self._add_field('Buy' if is_buy else 'Sell')   # Buy/sell
+        csv_text += self._add_field(is_maker)  # isMaker
+        csv_text += self._add_field(is_best_match, endl='\r')      # isBestMatch ***last entry gets endl***
 
         return csv_text
 
