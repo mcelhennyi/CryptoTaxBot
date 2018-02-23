@@ -1,3 +1,9 @@
+# Donations
+If this tool made your life easier then help make mine easier for making it!  
+BTC: 16HuArdg9DzXFyBopvkkBYfsSRtcodeq7v  
+ETH/ERC-20 Tokens: 0xb70A779095F455419d9B6120288eb8C2963d1708  
+LTC: LbLYzZLJCW4jA8xR5SSW8BLTK8hR8PpGnU  
+
 # CryptoTaxBot
 A way to automate logging all of your trades for taxes. This is perfect for people using a day trading bot, or for people who day trade. 
 
@@ -78,9 +84,3 @@ I am not a CPA, accountant, or financial advisor. I take no responsibility for u
 # Contact
 Email: imcelhenny1@gmail.com  
 Telegram: https://t.me/cryptotaxbot
-
-# Donations
-If this tool made your life easier then help make mine easier for making it!  
-BTC: 16HuArdg9DzXFyBopvkkBYfsSRtcodeq7v  
-ETH/ERC-20 Tokens: 0xb70A779095F455419d9B6120288eb8C2963d1708  
-LTC: LbLYzZLJCW4jA8xR5SSW8BLTK8hR8PpGnU  
