@@ -211,6 +211,12 @@ class BinanceLogger:
 
         return trade_id
 
+    def _get_last_profit_loss_for_sym(self, sym):
+
+        # TODO: query for old logs, and pull out the last profit/loss value from the log and return it
+
+        return 0
+
     def _get_my_trades_for_symbol(self, symbol, base, id_from=None):
         """
         trades is an array of dictionaries. Each dictionary is a different trade I made.
@@ -240,16 +246,20 @@ class BinanceLogger:
             trades_obj = self.client.get_my_trades(symbol=symbol+base, fromId=id_from+1)
 
         # Generate the CSV for this pair
-        trades_csv = self._get_csv_from_trades(trades_obj, base_currency=base, symbol=symbol)
-
+        trades_csv = self._get_csv_from_trades(trades_obj,
+                                               last_profit_loss=self._get_last_profit_loss_for_sym(symbol.upper()),
+                                               base_currency=base,
+                                               symbol=symbol)
+        
         return trades_csv, trades_obj
 
     def _add_field(self, value, endl=''):
         return str(value) + "," + endl
 
-    def _get_csv_from_trades(self, trades, base_currency='BTC', symbol=''):
+    def _get_csv_from_trades(self, trades, last_profit_loss=None, base_currency='BTC', symbol=''):
         csv_text = ""
         num_trades = len(trades)
+        profit_loss = 0
         for i, trade in enumerate(trades):
             # trade['time'] IS in milliseconds
             print("Processing " + symbol+base_currency + " trades " + str(i+1) + "/" + str(num_trades) + "...")
@@ -260,21 +270,27 @@ class BinanceLogger:
                                                                              epoch_millis=trade['time'])
             fair_market_value_com_usd = self._fmv.get_average_usd_price_of_(symbol=trade['commissionAsset'],
                                                                             epoch_millis=trade['time'])
-            # TODO: Probably should do in a post process step
-            # profit_loss = self._get_profit_loss(price=trade['price'],
-            #                                     qty=trade['qty'],
-            #                                     fair_market_value=fair_market_value_btc_usd)
-            profit_loss = 0  # TODO: temp
+            # Calculates the fee of the transaction
             fee = self._get_fee(commission_paid=float(trade['commission']),
                                 commission_symbol=trade['commissionAsset'],
                                 epoch_millis=trade['time'])
 
+            # Calculate the money flow. This is not profit loss, but rather how much spent or how much received.
             money_flow = self._get_money_flow(quantity=float(trade['qty']),
                                               value_of_sym_in_base_currency=float(trade['price']),
                                               base_fmv=fair_market_value_base_usd,
                                               fee_usd=fee,
                                               is_buy=is_buy)
 
+            # Profit and loss is just the money flow for a given coin, plus the past profit loss.
+            #  Note this should only be written to the file, and in the last row.
+            profit_loss += money_flow
+            logged_profit_loss = 0
+            if i == num_trades-1:
+                # We are on the last trade (last row), log profit/loss for it
+                logged_profit_loss = profit_loss + last_profit_loss
+
+            # Add this entry to the csv
             csv_text += self._data_to_csv(time_millis=trade['time'],
                                           trade_id=trade['id'],
                                           order_id=trade['orderId'],
@@ -284,7 +300,7 @@ class BinanceLogger:
                                           price=trade['price'],
                                           commission_fee=trade['commission'],
                                           commission_symbol=trade['commissionAsset'],
-                                          profit_loss=profit_loss,
+                                          profit_loss=logged_profit_loss,
                                           money_flow=money_flow,
                                           fair_market_value_btc_usd=fair_market_value_btc_usd,
                                           fair_market_value_bnb_usd=fair_market_value_bnb_usd,
@@ -378,7 +394,7 @@ class BinanceLogger:
         return flow
 
     # TODO find profit/loss, this could be a little difficult unless "loss" is when i buy, and "profit" is when I sell?
-    def _get_profit_loss(self, price, qty, fair_market_value):
+    def _get_profit_loss(self, money_flow_total):
         return 0  # TODO Low priority, this can always be post processed
 
     def _write_header(self, f):
