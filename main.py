@@ -24,6 +24,7 @@ class Main:
 
     def _run_binance_logger(self):
         self.binance.main()
+        # self.binance.test("EDO")
 
     def _run_kucoin_logger(self):
         pass

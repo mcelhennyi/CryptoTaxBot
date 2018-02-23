@@ -3,14 +3,20 @@ from FairMarketValue.cryptocompare_interface import CryptoCompareInterface
 import time
 import datetime
 import os, sys
-
+import glob
+import pandas
 
 KEY_FILE = ".keys"
-CSV_BASE_LOCATION = "../logs"
+CSV_BASE_LOCATION = "logs"
 CSV_HEADERS = ['Epoch Time', 'Date/Time', 'Id', 'OrderId', 'Trading Pair', 'Quantity', 'Price in base currency',
                'Commission paid to exchange', 'Commision coin type (CCT)', 'Profit/Loss (+/-) (BTC)', 'Money Flows USD',
                'Fair Market Value USD (1-BTC)', 'Fair Market Value USD (1-BNB)', 'Fair Market Value USD (1-CCT)',
                'Buy/Sell', 'isMaker', 'isBestMatch']
+# Indices of date in folder name
+YEAR = 2
+MONTH = 3
+DAY = 4
+
 
 if not os.path.isdir(CSV_BASE_LOCATION):
     os.mkdir(CSV_BASE_LOCATION)
@@ -32,6 +38,8 @@ class BinanceLogger:
         else:
             self._fmv = fmv
 
+        self._recent_directory = None
+
     @staticmethod
     def load_keys():
         # Load key file to memory
@@ -49,7 +57,8 @@ class BinanceLogger:
         key = lines_split[0].split('=')[1].strip(' ')
         secret = lines_split[1].split('=')[1].strip(' ')
 
-        return key, secret,
+        return key, secret
+
     def main(self):
         # Get date for file titles
         date = datetime.datetime.now().strftime("%Y_%m_%d")
@@ -66,37 +75,62 @@ class BinanceLogger:
 
         # Iterate over each symbol, pull my trades, and log them with calculations included ...
         #   (profit/loss, fair market value, etc)
-        for sym in avail_symbols:
+        for both in avail_symbols:
+            time_start = time.time()
+
             # Get sym and base
-            base = sym[-3:]
-            sym = str(sym).split(base)[0]
+            sym, base = self._split_sym_base(both)
+            if sym == "123":
+                continue  # Bug in Binance RestAPI causes a return of a "123" symbol, SKIP IT
 
-            # if base == 'BTC' or base == 'ETH':
-            # print(sym+base)
-
-            # Open up a log for this coin only
-            print("Logging for " + str(sym))
-            trades_csv, trades_obj = self._get_my_trades_for_symbol(symbol=sym, base=base)
+            # Process the coin pair
+            print("\n***************************************\nProcessing " + str(sym) + str(base) + " trades...")
+            last_id = self._get_last_fetched_id_for_sym(sym)
+            trades_csv, trades_obj = self._get_my_trades_for_symbol(symbol=sym, base=base, id_from=last_id)
             if len(trades_obj) > 0:
                 # Log this trade away
                 full_csv_txt += trades_csv
-                with open(os.path.join(CSV_BASE_LOCATION, date + "_" + sym + ".csv"), mode='w') as f:
+                trade_csv_filename = os.path.join(CSV_BASE_LOCATION, date + "_" + sym + ".csv")
+                new_file = not os.path.isfile(trade_csv_filename)
+                with open(trade_csv_filename, mode='a') as f:
                     # Add the Header
-                    self._write_header(f)
+                    if new_file:
+                        self._write_header(f)
                     f.write(trades_csv)
-            # TODO: average requests take so long, this isnt needed
-            # time.sleep(1)
+
+            # Constrain main loop to once per second
+            time_elapsed = time.time() - time_start
+            if time_elapsed < 1:
+                time.sleep(1-time_elapsed)
         # Now log all to one file
         with open(os.path.join(CSV_BASE_LOCATION, date + "_all_pairs" + ".csv"), mode='w') as f:
-            print("Logging all pairs to one file")
+            print("\n***************************************\nLogging all pairs to one file")
             self._write_header(f)
             f.write(full_csv_txt)
 
-        print("Done!")
+        print("\nDone!")
 
     @staticmethod
     def _get_my_time_string(time_millis):
         return datetime.datetime.fromtimestamp(time_millis/1000).strftime('%c')
+
+    def _split_sym_base(self, both):
+        """
+        Split both into a sym+base pair. Can handle <n number of letters><3 letters> and <n number of letters>USDT
+
+        :param both:
+        :return:
+        """
+        last_three = both[-3:]
+        sym = str(both).split(last_three)[0]
+        if last_three == "SDT":
+            base = both[-4:]
+            sym = str(both).split(base)[0]
+            return sym, base
+        else:
+            base = last_three
+
+        return sym, base
 
     def _print_withdraw_entry(self, withdraw):
         print("Address " + str(withdraw['address']))
@@ -120,7 +154,64 @@ class BinanceLogger:
 
         return avail_sym
 
-    def _get_my_trades_for_symbol(self, symbol, base):
+    def test(self, sym):
+        # last_id = self._get_last_fetched_id_for_sym(sym)
+        # trades_csv, trades_obj = self._get_my_trades_for_symbol(symbol=sym, base="BTC", id_from=last_id)
+        # print("hello")
+        pass
+
+    def _get_last_fetched_id_for_sym(self, sym, base="BTC"):
+        # Open the last saved file for the given symbol
+
+        # Locate the directory of most recent records, if not already found
+        if self._recent_directory is None:
+            directories = glob.glob("cached_logs_*")
+
+            if len(directories) is 0:
+                # No Cached files, pull as many records as possible
+                return None
+
+            # Get the most recent folder
+            split_dirs = []
+            recent_index = 0
+            for i, directory in enumerate(directories):
+                split_dirs.append(directory.split("_"))
+
+                # Get most recent folder of cached logs
+                if split_dirs[i][YEAR] > split_dirs[recent_index][YEAR]:
+                    recent_index = i
+                else:
+                    if split_dirs[i][MONTH] > split_dirs[recent_index][MONTH] and \
+                            split_dirs[i][YEAR] >= split_dirs[recent_index][YEAR]:
+                        recent_index = i
+                    else:
+                        if split_dirs[i][DAY] > split_dirs[recent_index][DAY] and \
+                            split_dirs[i][MONTH] >= split_dirs[recent_index][MONTH] and \
+                                split_dirs[i][YEAR] >= split_dirs[recent_index][YEAR]:
+                            recent_index = i
+            self._recent_directory = directories[recent_index]
+
+        # Get the file for the symbol in the directory
+        sym_files = glob.glob(os.path.join(self._recent_directory, "*" + sym.upper() + ".csv"))
+        if len(sym_files) == 0:
+            # No Cached files, pull as many records as possible
+            return None
+
+        # Sanity Check
+        assert len(sym_files) == 1  # This should only return one file, if it doesnt then we have an issue saving data
+
+        # Load the csv data from the file for this symbol
+        df = pandas.read_csv(sym_files[0], usecols=[0, 2])
+
+        # Get index with largest epoch
+        row = df[CSV_HEADERS[0]].argmax()
+        df_max_epochs = df.loc[df[CSV_HEADERS[0]] == df[CSV_HEADERS[0]][row]]
+        max_trade_id = df_max_epochs[CSV_HEADERS[2]].argmax()
+        trade_id = df[CSV_HEADERS[2]][max_trade_id]
+
+        return trade_id
+
+    def _get_my_trades_for_symbol(self, symbol, base, id_from=None):
         """
         trades is an array of dictionaries. Each dictionary is a different trade I made.
         Each dictionary contains the following tags:
@@ -140,8 +231,15 @@ class BinanceLogger:
         :param symbol:
         :return: processed trades csv, trades json obj
         """
+        # Retrieve the trade data for this pair from binance
+        if id_from is None:
+            print("No cached_logs for " + symbol + " found, pulling all past trades...")
+            trades_obj = self.client.get_my_trades(symbol=symbol+base)
+        else:
+            print("Cached_logs for " + symbol + base + " found, pulling trades since " + str(id_from) + " trade 'id'")
+            trades_obj = self.client.get_my_trades(symbol=symbol+base, fromId=id_from+1)
 
-        trades_obj = self.client.get_my_trades(symbol=symbol+base) #, fromId=0)  # todo: fromId can be used to reduce response
+        # Generate the CSV for this pair
         trades_csv = self._get_csv_from_trades(trades_obj, base_currency=base, symbol=symbol)
 
         return trades_csv, trades_obj
