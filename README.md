@@ -28,6 +28,7 @@ Update (2/22/2018): The bot can now refer to local 'logs' folder and figure out 
 
 ## TODO
 - DONE, see note above (2/22/2018): create a way to only retrieve what has not been retrieved yet.
+- Calculate profit/loss (hopefully you dont have any loss!!!...stay strong and HODL!!!)
 - automate uploading results to google drive for garunteed backup
 - retrieve more than 500 per coin, if needed (imagine running this program once at the end of the year, instead of periodically throughout the year)
 
