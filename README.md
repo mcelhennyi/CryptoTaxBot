@@ -24,9 +24,10 @@ Note: ``highlighted text`` means this part is complete
 ## Current
 January 2018: This is currently a WIP but I hope to have this done sometime in the coming months (Feb/Mar 2018)  
 Update (2/12/18): The bot can pull down all past trades (up to 500 per coin) and calculate the `Fair Market Value` of that trade on the day it was made. The `Fair Market Value` used in this program is the `average` cost of `BTC` on the `DAY` of the trade. It will save all the information from binance along with calculated `Fair market values` into a CSV for visualizing in MS Excel.  
+Update (2/22/2018): The bot can now refer to local 'logs' folder and figure out where to start to pull down new trades. Note: There MUST be untampered 'logs' folder. The bot will move the files to a 'cached_logs_<date>' folder and will get the most recent trade id to pull down new trades.
 
 ## TODO
-- create a way to only retrieve what has not been retrieved yet.
+- DONE, see note above (2/22/2018): create a way to only retrieve what has not been retrieved yet.
 - automate uploading results to google drive for garunteed backup
 - retrieve more than 500 per coin, if needed (imagine running this program once at the end of the year, instead of periodically throughout the year)
 
