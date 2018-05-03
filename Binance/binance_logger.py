@@ -75,7 +75,7 @@ class BinanceLogger:
 
         # Iterate over each symbol, pull my trades, and log them with calculations included ...
         #   (profit/loss, fair market value, etc)
-        for both in avail_symbols:
+        for i, both in enumerate(avail_symbols):
             time_start = time.time()
 
             # Get sym and base
@@ -97,6 +97,8 @@ class BinanceLogger:
                     if new_file:
                         self._write_header(f)
                     f.write(trades_csv)
+
+            print("\n\t-- Progress: " + str(i+1) + "/" + str(len(avail_symbols)) + " symbol pairs processed. --")
 
             # Constrain main loop to once per second
             time_elapsed = time.time() - time_start
@@ -192,13 +194,19 @@ class BinanceLogger:
             self._recent_directory = directories[recent_index]
 
         # Get the file for the symbol in the directory
-        sym_files = glob.glob(os.path.join(self._recent_directory, "*" + sym.upper() + ".csv"))
+        search = "*_" + sym.upper() + ".csv"
+        print("debug: search used: " + search)
+        sym_files = glob.glob(os.path.join(self._recent_directory, search))
         if len(sym_files) == 0:
             # No Cached files, pull as many records as possible
             return None
 
         # Sanity Check
-        assert len(sym_files) == 1  # This should only return one file, if it doesnt then we have an issue saving data
+        if len(sym_files) is not 1:
+            print(sym_files)
+            assert len(
+                sym_files) == 1  # This should only return one file, if it doesnt then we have an issue saving data
+
 
         # Load the csv data from the file for this symbol
         df = pandas.read_csv(sym_files[0], usecols=[0, 2])
@@ -238,19 +246,35 @@ class BinanceLogger:
         :return: processed trades csv, trades json obj
         """
         # Retrieve the trade data for this pair from binance
-        if id_from is None:
-            print("No cached_logs for " + symbol + " found, pulling all past trades...")
-            trades_obj = self.client.get_my_trades(symbol=symbol+base)
-        else:
-            print("Cached_logs for " + symbol + base + " found, pulling trades since " + str(id_from) + " trade 'id'")
-            trades_obj = self.client.get_my_trades(symbol=symbol+base, fromId=id_from+1)
+        max_try = 5
+        try_count = 0
+        success = False
+        trades_obj = None
+        while try_count < max_try:
+            try:
+                if id_from is None:
+                    print("No cached_logs for " + symbol + " found, pulling all past trades...")
+                    trades_obj = self.client.get_my_trades(symbol=symbol+base)
+                else:
+                    print("Cached_logs for " + symbol + base + " found, pulling trades since " + str(id_from) + " trade 'id'")
+                    trades_obj = self.client.get_my_trades(symbol=symbol+base, fromId=id_from+1)
+
+                success = True
+                break
+            except Exception as e:
+                print("Warning, Error getting my trades: " + str(e) + "...trying again (" + str(try_count) +
+                      "/" + str(max_try) + "...")
+                try_count += 1
+                time.sleep(1)
+
+        assert success
 
         # Generate the CSV for this pair
         trades_csv = self._get_csv_from_trades(trades_obj,
                                                last_profit_loss=self._get_last_profit_loss_for_sym(symbol.upper()),
                                                base_currency=base,
                                                symbol=symbol)
-        
+
         return trades_csv, trades_obj
 
     def _add_field(self, value, endl=''):
