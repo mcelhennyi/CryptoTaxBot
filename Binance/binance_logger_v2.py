@@ -76,26 +76,27 @@ class BinanceLogger:
 
         # Iterate over each symbol, pull my trades, and log them with calculations included ...
         #   (profit/loss, fair market value, etc)
-        for i, both in enumerate(avail_symbols):
-            time_start = time.time()
-
-            # Get sym and base
-            sym, base = self._split_sym_base(both)
-            if sym == "123":
-                continue  # Bug in Binance RestAPI causes a return of a "123" symbol, SKIP IT
-
-            # Process the coin pair
-            print("\n***************************************\nProcessing " + str(sym) + str(base) + " trades...")
-
-            # Save trades off to database
-            self._save_my_trades_for_symbol(symbol=sym, base=base)  # TODO: get last_id to not pull all trades
-
-            print("\n\t-- Progress: " + str(i+1) + "/" + str(len(avail_symbols)) + " symbol pairs processed. --")
-
-            # Constrain main loop to once per second
-            time_elapsed = time.time() - time_start
-            if time_elapsed < 1:
-                time.sleep(1-time_elapsed)
+        # for i, both in enumerate(avail_symbols):
+        #     time_start = time.time()
+        #
+        #     # Get sym and base
+        #     sym, base = self._split_sym_base(both)
+        #     if sym == "123":
+        #         continue  # Bug in Binance RestAPI causes a return of a "123" symbol, SKIP IT
+        #
+        #     # Process the coin pair
+        #     print("\n***************************************\nProcessing " + str(sym) + str(base) + " trades...")
+        #
+        #     # Save trades off to database
+        #     # self._save_my_trades_for_symbol(symbol=sym, base=base)  # TODO: get last_id to not pull all trades
+        #
+        #
+        #     print("\n\t-- Progress: " + str(i+1) + "/" + str(len(avail_symbols)) + " symbol pairs processed. --")
+        #
+        #     # Constrain main loop to once per second
+        #     time_elapsed = time.time() - time_start
+        #     if time_elapsed < 1:
+        #         time.sleep(1-time_elapsed)
 
         # Save off the deposits to database
         self._save_my_deposits()

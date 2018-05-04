@@ -124,7 +124,7 @@ class DatabaseInterface:
         )
 
         try:
-            ret = self._session.query(Deposit).filter(and_(Deposit.address == address, Deposit.asset == asset)).one()
+            ret = self._session.query(Deposit).filter(and_(Deposit.tx_id == tx_id, Deposit.asset == asset)).one()
             # This forces uniqueness between the combination of the address and asset combo,
             #  we dont add if it already exists
         except NoResultFound:
