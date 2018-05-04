@@ -1,5 +1,5 @@
 from FairMarketValue.cryptocompare_interface import CryptoCompareInterface
-from Binance.binance_logger import BinanceLogger
+from Binance.binance_logger_v2 import BinanceLogger
 import time
 import os, sys
 

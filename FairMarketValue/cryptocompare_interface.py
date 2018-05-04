@@ -56,17 +56,6 @@ class CryptoCompareInterface(FairMarketValue):
         # print("Requesting average")
         return float(self._request_day_average(epoch_seconds=epoch_millis/1000, from_sym=symbol, to_sym='btc')['BTC'])
 
-    # def _request_day_average(self, epoch_seconds, from_sym, to_sym='BTC'):
-    #     # https://min-api.cryptocompare.com/data/dayAvg?fsym=BTC&tsym=USD&toTs=1517460356&extraParams=your_app_name
-    #     connection = http.client.HTTPSConnection('min-api.cryptocompare.com', timeout=2)
-    #     connection.request('GET', '/data/dayAvg?fsym=' + str(from_sym).upper() + '&tsym=' + to_sym.upper() +
-    #                        '&toTs=' + str(int(epoch_seconds)) + '&extraParams=CryptoTaxBot')
-    #     response = connection.getresponse()
-    #     if response.status is not 200:
-    #         raise Exception("Request not good: " + str(response.status))
-    #
-    #     return json.loads(response.read().decode('utf-8'))
-
     def _request_day_average(self, epoch_seconds, from_sym, to_sym='BTC'):
         # Example request:
         #    https://min-api.cryptocompare.com/data/dayAvg?fsym=BTC&tsym=USD&toTs=1517460356&extraParams=your_app_name

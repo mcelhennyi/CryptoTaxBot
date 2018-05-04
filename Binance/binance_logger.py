@@ -165,6 +165,20 @@ class BinanceLogger:
     def _get_last_fetched_id_for_sym(self, sym, base="BTC"):
         # Open the last saved file for the given symbol
 
+
+
+
+
+
+
+        # TODO:
+        # This only handles one previous cached folder, but doesnt look at multiple cached folders...this need to be added
+
+
+
+
+
+
         # Locate the directory of most recent records, if not already found
         if self._recent_directory is None:
             directories = glob.glob("cached_logs_*")
