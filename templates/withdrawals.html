@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+  <div>
+    <table style="width:100%">
+
+        <!--These are Headers-->
+        <tr>
+            {% for header in withdraw_headers %}
+            <th>{{header}}</th>
+            {% endfor %}
+        </tr>
+
+        {% for withdraw in withdraw_list %}
+        <tr>
+            {% for header in withdraw_headers %}
+            <th>{{withdraw[header]}}</th>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+  </div>
+{% endblock %}

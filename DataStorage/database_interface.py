@@ -27,6 +27,9 @@ class DatabaseInterface:
         # Create the tables
         Base.metadata.create_all(self._engine)  # Base come from tables.py import
 
+    def query_withdrawals(self):
+        return self._session.query(Withdrawal).filter(Withdrawal.exchange_name == "BINANCE").all()
+
     def save_trade(self,
                    time_millis,
                    exchange_name,
