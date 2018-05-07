@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine
+from sqlalchemy.sql import text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import relationship
@@ -27,8 +28,16 @@ class DatabaseInterface:
         # Create the tables
         Base.metadata.create_all(self._engine)  # Base come from tables.py import
 
-    def query_withdrawals(self):
-        return self._session.query(Withdrawal).filter(Withdrawal.exchange_name == "BINANCE").all()
+    def query_all_withdrawals(self, exchange):
+        query = self._session.query(Withdrawal).filter(Withdrawal.exchange_name == exchange.upper())
+        query_results = query.all()
+        return Withdrawal.__table__.columns.keys(), query_results  # TODO: Note: this is a return of all column names.
+
+    def query_all_deposits(self, exchange):
+        stmt = stmt.columns(Deposit.insert_time, Deposit.amount, Deposit.asset)
+        query = self._session.query(Deposit.insert_time, Deposit.amount, Deposit.asset).filter(Deposit.exchange_name == exchange.upper())
+        query_results = query.order_by(Deposit.insert_time).all()
+        return Deposit.__table__.columns.keys(), query_results  # TODO: Note: this is a return of all column names.
 
     def save_trade(self,
                    time_millis,

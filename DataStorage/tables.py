@@ -4,6 +4,8 @@ from sqlalchemy import Column, ForeignKey, Integer, String, Float, BigInteger, B
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 import enum
+from sqlalchemy import inspect
+
 
 # ------------- #
 #    Configs    #
@@ -55,6 +57,11 @@ class Trade(Base):
     is_buyer = Column(Boolean)          # Buy/Sell
     is_maker = Column(Boolean)          # See api docs (?)
 
+    # convert to dictionary
+    def to_dict(self):
+        return {c.key: getattr(self, c.key)
+                for c in inspect(self).mapper.column_attrs}
+
 
 class DepositStatusEnum(enum.Enum):
     e_pending = 0
@@ -89,6 +96,11 @@ class Deposit(Base):
     asset = Column(String(5))                   # Symbol
     amount = Column(Float)                      # Quantity deposited
 
+    # convert to dictionary
+    def to_dict(self):
+        return {c.key: getattr(self, c.key)
+                for c in inspect(self).mapper.column_attrs}
+
 
 class Withdrawal(Base):
     __tablename__ = 'withdrawals'
@@ -109,6 +121,11 @@ class Withdrawal(Base):
     # Money
     asset = Column(String(5))                   # Symbol
     amount = Column(Float)                      # Quantity withdrawn
+
+    # convert to dictionary
+    def to_dict(self):
+        return {c.key: getattr(self, c.key)
+                for c in inspect(self).mapper.column_attrs}
 
 
 

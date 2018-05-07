@@ -1,17 +1,16 @@
 from DataStorage.tables import Trade, Withdrawal, Deposit, Base
 from DataStorage.database_interface import DatabaseInterface
 from flask import Flask, render_template, flash, redirect, url_for, session, request, logging
-# from data import Articles
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
-
+from datetime import datetime
 
 app = Flask(__name__)
 
 # Setup the db
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////temp_db.db'
-db = DatabaseInterface(verbose=True)
+db = DatabaseInterface(verbose=False)
 
 # Categories
 CAT_ERROR = 'danger'
@@ -26,21 +25,29 @@ def index():
 
 @app.route('/withdrawals')
 def withdrawals():
-    withdraw_headers = Withdrawal.__table__.c.key()
-    withdraw_list = []#db.query_withdrawals()
+    withdraw_list = []
+    withdraw_headers, withdraw_results = db.query_all_withdrawals('binance')
+    for withdraw in withdraw_results:
+        assert isinstance(withdraw, Withdrawal)
+        withdraw_list.append(withdraw.to_dict())
+        print(withdraw.to_dict())
 
-    print(withdraw_headers)
-
-    # withdraw_query = db.query_withdrawals()
-    # for withdraw in withdraw_query:
-    #     assert isinstance(withdraw, Withdrawal)
-    #     withdraw_list.append(dict(withdraw))
-
-    # print(withdraw_query)
+    return render_template('withdrawals.html', headers=withdraw_headers, data_list=withdraw_list)
 
 
+@app.route('/deposits')
+def deposits():
+    deposit_list = []
+    deposit_headers, deposit_results = db.query_all_deposits('binance')
+    for deposit in deposit_results:
+        print(deposit)
+        deposit_dict = deposit.to_dict()
+        deposit_dict['insert_time'] = datetime.fromtimestamp(deposit_dict['insert_time']/1000.0
+                                                             ).strftime('%m-%d-%Y %I:%M:%S%p')
+        deposit_list.append(deposit_dict)
+        # print(deposit.to_dict())
 
-    return render_template('withdrawals.html', withdraw_headers=withdraw_headers, withdraw_list=withdraw_list)
+    return render_template('deposits.html', headers=deposit_headers, data_list=deposit_list)
 
 
 if __name__ == '__main__':

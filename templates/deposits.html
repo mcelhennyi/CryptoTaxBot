@@ -7,20 +7,24 @@
         <!--These are Headers-->
         <tr>
             {% for header in headers %}
+            {% if header != 'row_id' %}
             <th>{{header}}</th>
+            {% endif %}
             {% endfor %}
         </tr>
 
-        {% for withdraw in data_list %}
+        {% for deposit in data_list %}
         <tr>
             {% for header in headers %}
+            {% if header != 'row_id' %}
             <th>
-                {% if withdraw[header] %}
-                {{withdraw[header]}}
+                {% if deposit[header] %}
+                {{deposit[header]}}
                 {% else %}
                 None
                 {% endif %}
             </th>
+            {% endif %}
             {% endfor %}
         </tr>
         {% endfor %}

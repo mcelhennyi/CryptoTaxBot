@@ -1,5 +1,5 @@
 python-binance
 sqlalchemy==1.2.7
-flask_sqlalchemy
 wtforms
 passlib
+flask
