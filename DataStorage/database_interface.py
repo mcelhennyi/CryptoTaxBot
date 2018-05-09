@@ -20,8 +20,8 @@ DB_NAME = "temp_db.db"  # This will be the sqlite filename
 # ----------------------------- #
 
 class DatabaseInterface:
-    def __init__(self, verbose=False):
-        self._engine = create_engine('sqlite:///'+DB_NAME, echo=verbose)
+    def __init__(self, verbose=False, db_loc_offset=''):
+        self._engine = create_engine('sqlite:///'+ db_loc_offset + DB_NAME, echo=verbose)
         _Session = sessionmaker(bind=self._engine)
         self._session = _Session()
 
@@ -34,10 +34,36 @@ class DatabaseInterface:
         return Withdrawal.__table__.columns.keys(), query_results  # TODO: Note: this is a return of all column names.
 
     def query_all_deposits(self, exchange):
-        stmt = stmt.columns(Deposit.insert_time, Deposit.amount, Deposit.asset)
-        query = self._session.query(Deposit.insert_time, Deposit.amount, Deposit.asset).filter(Deposit.exchange_name == exchange.upper())
+        # stmt = stmt.columns(Deposit.insert_time, Deposit.amount, Deposit.asset)
+        query = self._session.query(Deposit).filter(Deposit.exchange_name == exchange.upper())
         query_results = query.order_by(Deposit.insert_time).all()
         return Deposit.__table__.columns.keys(), query_results  # TODO: Note: this is a return of all column names.
+
+    def get_all_symbols_for_exchange(self, exchange):
+        query = self._session.query(Trade.symbol).distinct(Trade.symbol).filter(Trade.exchange_name == exchange.upper())
+        query_results = query.all()
+        return query_results
+
+    def has_deposits(self, symbol, exchange):
+        query = self._session.query(Deposit.row_id).filter(Deposit.exchange_name == exchange.upper(),
+                                                           Deposit.asset == symbol.upper())
+        query_results = query.all()
+        if len(query_results) > 0:
+            return True
+        else:
+            return False
+
+    def has_withdrawals(self, symbol, exchange):
+        query = self._session.query(Withdrawal.row_id).filter(Withdrawal.exchange_name == exchange.upper(),
+                                                              Withdrawal.asset == symbol.upper())
+        query_results = query.all()
+        if len(query_results) > 0:
+            return True
+        else:
+            return False
+
+    def get_profit_for_pair(self, symbol, base):
+        pass
 
     def save_trade(self,
                    time_millis,
@@ -189,7 +215,26 @@ class DatabaseInterface:
 
 
 if __name__ == "__main__":
-    di = DatabaseInterface()
+    di = DatabaseInterface(db_loc_offset='../')
+
+    # ----------------------------------------------- #
+    # -- Test getting profit/loss for a given coin -- #
+    # ----------------------------------------------- #
+    # Exchange to check for
+    exchange = 'binance'
+
+    # Get all coins
+    symbols = di.get_all_symbols_for_exchange(exchange)
+
+    # for each coin check if it has any deposits/withdrawals...skip that coin for now
+    for coin_tuple in symbols:
+        # get all symbols returns a tuple, first index being the coin
+        coin = coin_tuple[0]
+        if di.has_deposits(coin, exchange) or di.has_withdrawals(coin, exchange):
+            print(coin + " has deposits/withdrawals, skipping for now.")
+        else:
+            pass
+
 
     # di.save_deposit()
     #
